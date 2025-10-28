@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robocopy Command Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f3f3f3;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #fafafa;
+            --text-primary: #323130;
+            --text-secondary: #605e5c;
+            --border-color: #e1dfdd;
+            --accent-color: #0078d4;
+            --hover-color: #106ebe;
+            --input-bg: #ffffff;
+            --shadow: 0 1px 2px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+            --radius: 4px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d30;
+            --bg-tertiary: #252526;
+            --text-primary: #cccccc;
+            --text-secondary: #969696;
+            --border-color: #3e3e42;
+            --input-bg: #3c3c3c;
+            --shadow: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-color);
+        }
+
+        .main-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            background: var(--bg-secondary);
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--bg-primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-section {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 250px;
+            white-space: normal;
+            width: max-content;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 117%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--text-primary);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after,
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+        }
+
+        .output-section {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .output-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .command-output {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            word-break: break-all;
+            min-height: 60px;
+            margin-bottom: 12px;
+        }
+
+        .command-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+        }
+
+        .command-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .command-item:last-child {
+            border-bottom: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--hover-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+        }
+
+        .btn-danger {
+            background: #d13438;
+        }
+
+        .btn-danger:hover {
+            background: #b92b2f;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body data-theme="">
+    <div class="container">
+        <div class="header">
+            <h1>Robocopy Command Generator</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'basic')">Basic Options</button>
+                <button class="tab" onclick="switchTab(event, 'advanced')">Advanced Options</button>
+            </div>
+
+            <div id="basic" class="tab-content active">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h3>📁 Source and Destination</h3>
+                        <div class="form-group">
+                            <label>
+                                Source Path
+                                <span class="tooltip" data-tooltip="The source directory path to copy from">?</span>
+                            </label>
+                            <input type="text" id="source" placeholder="C:\Source\" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Destination Path
+                                <span class="tooltip" data-tooltip="The destination directory path to copy to">?</span>
+                            </label>
+                            <input type="text" id="destination" placeholder="C:\Destination\" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                File Pattern
+                                <span class="tooltip" data-tooltip="File(s) to copy (names/wildcards: default is *.*)">?</span>
+                            </label>
+                            <input type="text" id="files" placeholder="*.*" value="*.*" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>⚙️ Copy Options</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="mir" />
+                                <label for="mir">
+                                    Mirror (/MIR)
+                                    <span class="tooltip" data-tooltip="Mirror a directory tree (equivalent to /E plus /PURGE)">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="e" />
+                                <label for="e">
+                                    Copy subdirectories (/E)
+                                    <span class="tooltip" data-tooltip="Copy subdirectories, including empty ones">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="s" />
+                                <label for="s">
+                                    Copy non-empty subdirectories (/S)
+                                    <span class="tooltip" data-tooltip="Copy subdirectories, excluding empty ones">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="purge" />
+                                <label for="purge">
+                                    Purge (/PURGE)
+                                    <span class="tooltip" data-tooltip="Delete destination files/directories that no longer exist in source">?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔄 File Selection</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="xo" />
+                                <label for="xo">
+                                    Exclude older (/XO)
+                                    <span class="tooltip" data-tooltip="Exclude older files">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="xa" />
+                                <label for="xa">
+                                    Exclude attributes (/XA)
+                                    <span class="tooltip" data-tooltip="Exclude files with any of the given attributes">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="xc" />
+                                <label for="xc">
+                                    Exclude changed (/XC)
+                                    <span class="tooltip" data-tooltip="Exclude changed files">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="xn" />
+                                <label for="xn">
+                                    Exclude newer (/XN)
+                                    <span class="tooltip" data-tooltip="Exclude newer files">?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📊 Performance</h3>
+                        <div class="form-group">
+                            <label>
+                                Multi-threaded (/MT)
+                                <span class="tooltip" data-tooltip="Multi-threaded copies with n threads (default 8). n must be at least 1 and at most 128">?</span>
+                            </label>
+                            <input type="number" id="mt" min="1" max="128" placeholder="8" />
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="lfsm" />
+                            <label for="lfsm">
+                                Low free space mode (/LFSM)
+                                <span class="tooltip" data-tooltip="Operate in low free space mode, enabling copy pause and resume">?</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="advanced" class="tab-content">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h3>🔒 Copy Flags</h3>
+                        <div class="form-group">
+                            <label>
+                                Copy Flags (/COPY)
+                                <span class="tooltip" data-tooltip="What to copy for files (default is /COPY:DAT). D=Data, A=Attributes, T=Timestamps, S=Security=NTFS ACLs, O=Owner info, U=aUditing info">?</span>
+                            </label>
+                            <select id="copy">
+                                <option value="">Default (DAT)</option>
+                                <option value="D">D - Data only</option>
+                                <option value="DA">DA - Data + Attributes</option>
+                                <option value="DAT">DAT - Data + Attributes + Timestamps</option>
+                                <option value="DATS">DATS - Data + Attributes + Timestamps + Security</option>
+                                <option value="DATSO">DATSO - Data + Attributes + Timestamps + Security + Owner</option>
+                                <option value="DATSOU">DATSOU - All</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="sec" />
+                                <label for="sec">
+                                    Copy security (/SEC)
+                                    <span class="tooltip" data-tooltip="Copy files with security (equivalent to /COPY:DATS)">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="copyall" />
+                                <label for="copyall">
+                                    Copy all (/COPYALL)
+                                    <span class="tooltip" data-tooltip="Copy all file info (equivalent to /COPY:DATSOU)">?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📝 Logging Options</h3>
+                        <div class="form-group">
+                            <label>
+                                Log File Path
+                                <span class="tooltip" data-tooltip="Output status to LOG file (overwrite existing log)">?</span>
+                            </label>
+                            <input type="text" id="log" placeholder="C:\robocopy.log" />
+                        </div>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="log_append" />
+                                <label for="log_append">
+                                    Append to log (/LOG+)
+                                    <span class="tooltip" data-tooltip="Append output to LOG file (don't overwrite existing log)">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="v" />
+                                <label for="v">
+                                    Verbose (/V)
+                                    <span class="tooltip" data-tooltip="Produce verbose output, showing skipped files">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ts" />
+                                <label for="ts">
+                                    Include timestamps (/TS)
+                                    <span class="tooltip" data-tooltip="Include source file time stamps in the output">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="fp" />
+                                <label for="fp">
+                                    Include full pathname (/FP)
+                                    <span class="tooltip" data-tooltip="Include full pathname of files in the output">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ns" />
+                                <label for="ns">
+                                    No file sizes (/NS)
+                                    <span class="tooltip" data-tooltip="No file sizes - don't log file sizes">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="nc" />
+                                <label for="nc">
+                                    No file classes (/NC)
+                                    <span class="tooltip" data-tooltip="No file classes - don't log file classes">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="nfl" />
+                                <label for="nfl">
+                                    No file list (/NFL)
+                                    <span class="tooltip" data-tooltip="No file list - don't log file names">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ndl" />
+                                <label for="ndl">
+                                    No directory list (/NDL)
+                                    <span class="tooltip" data-tooltip="No directory list - don't log directory names">?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔄 Retry Options</h3>
+                        <div class="form-group">
+                            <label>
+                                Retry Count (/R)
+                                <span class="tooltip" data-tooltip="Number of retries on failed copies (default 1 million)">?</span>
+                            </label>
+                            <input type="number" id="r" min="0" placeholder="1000000" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Wait Time (/W)
+                                <span class="tooltip" data-tooltip="Wait time between retries in seconds (default 30)">?</span>
+                            </label>
+                            <input type="number" id="w" min="0" placeholder="30" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🎯 File Filters</h3>
+                        <div class="form-group">
+                            <label>
+                                Exclude Files (/XF)
+                                <span class="tooltip" data-tooltip="Exclude files matching given names/paths/wildcards">?</span>
+                            </label>
+                            <input type="text" id="xf" placeholder="*.tmp *.log" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Exclude Directories (/XD)
+                                <span class="tooltip" data-tooltip="Exclude directories matching given names/paths">?</span>
+                            </label>
+                            <input type="text" id="xd" placeholder="temp logs" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Maximum file size (/MAX)
+                                <span class="tooltip" data-tooltip="Maximum file size - exclude files bigger than n bytes">?</span>
+                            </label>
+                            <input type="number" id="max" min="0" placeholder="Size in bytes" />
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Minimum file size (/MIN)
+                                <span class="tooltip" data-tooltip="Minimum file size - exclude files smaller than n bytes">?</span>
+                            </label>
+                            <input type="number" id="min" min="0" placeholder="Size in bytes" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>⚡ Additional Options</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="z" />
+                                <label for="z">
+                                    Restartable mode (/Z)
+                                    <span class="tooltip" data-tooltip="Copy files in restartable mode">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="b" />
+                                <label for="b">
+                                    Backup mode (/B)
+                                    <span class="tooltip" data-tooltip="Copy files in backup mode">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="efsraw" />
+                                <label for="efsraw">
+                                    Copy EFS RAW (/EFSRAW)
+                                    <span class="tooltip" data-tooltip="Copy all encrypted files in EFS RAW mode">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="a" />
+                                <label for="a">
+                                    Clear archive bit (/A)
+                                    <span class="tooltip" data-tooltip="Copy only files with the archive attribute and reset it">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="m" />
+                                <label for="m">
+                                    Move files (/M)
+                                    <span class="tooltip" data-tooltip="Copy files with archive attribute and reset it (move mode)">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="mov" />
+                                <label for="mov">
+                                    Move files and dirs (/MOV)
+                                    <span class="tooltip" data-tooltip="Move files (delete from source after copying)">?</span>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="move" />
+                                <label for="move">
+                                    Move tree (/MOVE)
+                                    <span class="tooltip" data-tooltip="Move files and dirs (delete from source after copying)">?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h3>Generated Command</h3>
+                <div class="command-output" id="commandOutput">Click "Generate Command" to see the robocopy command</div>
+                <div class="button-group">
+                    <button class="btn" onclick="generateCommand()">⚡ Generate Command</button>
+                    <button class="btn btn-secondary" onclick="copyCommand()">📋 Copy Command</button>
+                    <button class="btn btn-secondary" onclick="addToQueue()">➕ Add to Queue</button>
+                    <button class="btn btn-danger" onclick="clearAll()">🗑️ Clear All</button>
+                </div>
+            </div>
+
+            <div class="output-section" id="queueSection" style="display: none;">
+                <h3>Command Queue</h3>
+                <div class="command-list" id="commandQueue"></div>
+                <div class="button-group">
+                    <button class="btn" onclick="downloadBatch()">💾 Download Batch File</button>
+                    <button class="btn btn-secondary" onclick="clearQueue()">🗑️ Clear Queue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let commandQueue = [];
+
+        // Initialize theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.setAttribute('data-theme', savedTheme);
+                updateThemeButton(savedTheme);
+            } else {
+                // Check system preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.setAttribute('data-theme', 'dark');
+                    updateThemeButton('dark');
+                }
+            }
+
+            // Auto-generate command when inputs change
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', generateCommand);
+                input.addEventListener('change', generateCommand);
+            });
+
+            generateCommand();
+        });
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? '' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const button = document.querySelector('.theme-toggle');
+            button.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        function switchTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+
+            const tablinks = document.getElementsByClassName("tab");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function generateCommand() {
+            const source = document.getElementById('source').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const files = document.getElementById('files').value.trim() || '*.*';
+
+            if (!source || !destination) {
+                document.getElementById('commandOutput').textContent = 'Please enter source and destination paths';
+                return;
+            }
+
+            let command = `robocopy "${source}" "${destination}" ${files}`;
+
+            // Basic options
+            if (document.getElementById('mir').checked) command += ' /MIR';
+            if (document.getElementById('e').checked) command += ' /E';
+            if (document.getElementById('s').checked) command += ' /S';
+            if (document.getElementById('purge').checked) command += ' /PURGE';
+
+            // File selection
+            if (document.getElementById('xo').checked) command += ' /XO';
+            if (document.getElementById('xa').checked) command += ' /XA';
+            if (document.getElementById('xc').checked) command += ' /XC';
+            if (document.getElementById('xn').checked) command += ' /XN';
+
+            // Performance
+            const mt = document.getElementById('mt').value;
+            if (mt) command += ` /MT:${mt}`;
+            if (document.getElementById('lfsm').checked) command += ' /LFSM';
+
+            // Advanced options
+            const copyFlags = document.getElementById('copy').value;
+            if (copyFlags) command += ` /COPY:${copyFlags}`;
+            if (document.getElementById('sec').checked) command += ' /SEC';
+            if (document.getElementById('copyall').checked) command += ' /COPYALL';
+
+            // Logging
+            const logFile = document.getElementById('log').value.trim();
+            if (logFile) {
+                if (document.getElementById('log_append').checked) {
+                    command += ` /LOG+:"${logFile}"`;
+                } else {
+                    command += ` /LOG:"${logFile}"`;
+                }
+            }
+            if (document.getElementById('v').checked) command += ' /V';
+            if (document.getElementById('ts').checked) command += ' /TS';
+            if (document.getElementById('fp').checked) command += ' /FP';
+            if (document.getElementById('ns').checked) command += ' /NS';
+            if (document.getElementById('nc').checked) command += ' /NC';
+            if (document.getElementById('nfl').checked) command += ' /NFL';
+            if (document.getElementById('ndl').checked) command += ' /NDL';
+
+            // Retry options
+            const retryCount = document.getElementById('r').value;
+            if (retryCount) command += ` /R:${retryCount}`;
+            const waitTime = document.getElementById('w').value;
+            if (waitTime) command += ` /W:${waitTime}`;
+
+            // File filters
+            const excludeFiles = document.getElementById('xf').value.trim();
+            if (excludeFiles) command += ` /XF ${excludeFiles}`;
+            const excludeDirs = document.getElementById('xd').value.trim();
+            if (excludeDirs) command += ` /XD ${excludeDirs}`;
+            const maxSize = document.getElementById('max').value;
+            if (maxSize) command += ` /MAX:${maxSize}`;
+            const minSize = document.getElementById('min').value;
+            if (minSize) command += ` /MIN:${minSize}`;
+
+            // Additional options
+            if (document.getElementById('z').checked) command += ' /Z';
+            if (document.getElementById('b').checked) command += ' /B';
+            if (document.getElementById('efsraw').checked) command += ' /EFSRAW';
+            if (document.getElementById('a').checked) command += ' /A';
+            if (document.getElementById('m').checked) command += ' /M';
+            if (document.getElementById('mov').checked) command += ' /MOV';
+            if (document.getElementById('move').checked) command += ' /MOVE';
+
+            document.getElementById('commandOutput').textContent = command;
+        }
+
+        function copyCommand() {
+            const command = document.getElementById('commandOutput').textContent;
+            if (command && command !== 'Please enter source and destination paths' && command !== 'Click "Generate Command" to see the robocopy command') {
+                navigator.clipboard.writeText(command).then(() => {
+                    showNotification('Command copied to clipboard!');
+                });
+            }
+        }
+
+        function addToQueue() {
+            const command = document.getElementById('commandOutput').textContent;
+            if (command && command !== 'Please enter source and destination paths' && command !== 'Click "Generate Command" to see the robocopy command') {
+                commandQueue.push(command);
+                updateQueueDisplay();
+                showNotification('Command added to queue!');
+            }
+        }
+
+        function updateQueueDisplay() {
+            const queueSection = document.getElementById('queueSection');
+            const queueList = document.getElementById('commandQueue');
+
+            if (commandQueue.length > 0) {
+                queueSection.style.display = 'block';
+                queueList.innerHTML = commandQueue.map((cmd, index) =>
+                    `<div class="command-item">${index + 1}. ${cmd}</div>`
+                ).join('');
+            } else {
+                queueSection.style.display = 'none';
+            }
+        }
+
+        function clearQueue() {
+            commandQueue = [];
+            updateQueueDisplay();
+            showNotification('Queue cleared!');
+        }
+
+        function downloadBatch() {
+            if (commandQueue.length === 0) {
+                showNotification('No commands in queue!');
+                return;
+            }
+
+            let batchContent = '@echo off\n';
+            batchContent += 'REM Robocopy Batch File\n';
+            batchContent += 'REM Generated by Robocopy Command Generator\n';
+            batchContent += `REM Created on ${new Date().toLocaleString()}\n\n`;
+
+            commandQueue.forEach((command, index) => {
+                batchContent += `echo Executing command ${index + 1} of ${commandQueue.length}...\n`;
+                batchContent += `${command}\n`;
+                batchContent += 'if %errorlevel% neq 0 (\n';
+                batchContent += `    echo Command ${index + 1} failed with error level %errorlevel%\n`;
+                batchContent += '    pause\n';
+                batchContent += ')\n\n';
+            });
+
+            batchContent += 'echo All commands completed.\n';
+            batchContent += 'pause\n';
+
+            const blob = new Blob([batchContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'robocopy_commands.bat';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Batch file downloaded!');
+        }
+
+        function clearAll() {
+            // Clear all form inputs
+            const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+            inputs.forEach(input => input.value = '');
+
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => select.selectedIndex = 0);
+
+            // Reset file pattern to default
+            document.getElementById('files').value = '*.*';
+
+            // Clear command output
+            document.getElementById('commandOutput').textContent = 'Click "Generate Command" to see the robocopy command';
+
+            showNotification('All fields cleared!');
+        }
+
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--accent-color);
+                color: white;
+                padding: 12px 20px;
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-hover);
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 500;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Listen for system theme changes
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (!localStorage.getItem('theme')) {
+                    document.body.setAttribute('data-theme', e.matches ? 'dark' : '');
+                    updateThemeButton(e.matches ? 'dark' : '');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
